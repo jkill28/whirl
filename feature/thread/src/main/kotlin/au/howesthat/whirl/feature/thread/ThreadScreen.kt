@@ -1,5 +1,6 @@
 package au.howesthat.whirl.feature.thread
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
@@ -126,7 +128,7 @@ fun ThreadScreen(navIcon: NavIcon, nav: ThreadNav, viewModel: ThreadViewModel = 
         val start = startPage
         if (start == null) {
             Column(Modifier.padding(outer)) {
-                TopAppBar(title = { Text(title.orEmpty()) }, navigationIcon = { NavIconButton(navIcon) }, windowInsets = TopBarInsets)
+                TopAppBar(title = { Text(title.orEmpty(), fontWeight = FontWeight.SemiBold) }, navigationIcon = { NavIconButton(navIcon) }, windowInsets = TopBarInsets)
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     val failed = error
                     if (failed != null) {
@@ -174,7 +176,7 @@ private fun ThreadPager(
             windowInsets = TopBarInsets,
             title = {
                 Column(Modifier.clickable(role = Role.Button, onClickLabel = stringResource(au.howesthat.whirl.core.ui.R.string.go_to_page)) { picking = true }) {
-                    Text(title.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(title.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
                     val sub = listOfNotNull(
                         stringResource(au.howesthat.whirl.core.ui.R.string.page_of, pager.currentPage + 1, pageCount),
                         filterLabel(filter).takeIf { filter != PostFilter.All },
@@ -289,7 +291,7 @@ private fun PostList(
                 ui.updatedAt?.let {
                     Text(
                         stringResource(R.string.updated_ago, timeAgo(it, now)),
-                        Modifier.readableWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                        Modifier.readableWidth().padding(horizontal = 20.dp, vertical = 8.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -299,7 +301,12 @@ private fun PostList(
         ui.note?.let { note ->
             item(key = "note") {
                 // Theme colours only: the note's site styling (pale orange) does not survive a dark scheme.
-                Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.readableWidth()) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier.readableWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
                             stringResource(R.string.moderator_note),
@@ -316,13 +323,19 @@ private fun PostList(
                 PartsRow(
                     parts,
                     onOpen = { viewModel.openLink("https://forums.whirlpool.net.au/thread/${it.threadId.value}") },
-                    modifier = Modifier.readableWidth(),
+                    modifier = Modifier.readableWidth().padding(horizontal = 16.dp, vertical = 6.dp),
                 )
             }
         }
         items(ui.posts, key = { it.post.replyId }) { post ->
             // Posts stay a readable width in landscape and on large screens.
-            Column(Modifier.readableWidth()) {
+            Surface(
+                modifier = Modifier.readableWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+                shape = RoundedCornerShape(18.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                shadowElevation = 1.dp,
+            ) {
                 PostItem(
                     post = post,
                     textStyle = textStyle,
@@ -336,7 +349,6 @@ private fun PostList(
                     onReport = { browser(viewModel.reportPostUrl(post.post)) },
                     onOpenInBrowser = { browser(viewModel.postUrl(post.post, page)) },
                 )
-                HorizontalDivider()
             }
         }
     }
@@ -375,25 +387,27 @@ private fun PostItem(
                     onLongClick = { menu = true },
                     onClick = {},
                     onLongClickLabel = stringResource(au.howesthat.whirl.core.ui.R.string.show_actions),
-                )
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+                ),
         ) {
-            PostHeader(p, onUser)
-            when {
-                p.isHidden -> Text(
-                    stringResource(R.string.post_hidden, p.hiddenReason.orEmpty()),
-                    style = textStyle,
-                    fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                p.isDeleted && post.body.blocks.isEmpty() -> Text(
-                    stringResource(R.string.post_deleted),
-                    style = textStyle,
-                    fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                else -> PostBodyView(post.body, onLink = onLink, onQuote = onQuote, textStyle = textStyle)
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                PostHeader(p, onUser)
+            }
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
+                when {
+                    p.isHidden -> Text(
+                        stringResource(R.string.post_hidden, p.hiddenReason.orEmpty()),
+                        style = textStyle,
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    p.isDeleted && post.body.blocks.isEmpty() -> Text(
+                        stringResource(R.string.post_deleted),
+                        style = textStyle,
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    else -> PostBodyView(post.body, onLink = onLink, onQuote = onQuote, textStyle = textStyle)
+                }
             }
         }
         ActionsMenu(menu, onDismiss = { menu = false }, actions)
@@ -402,12 +416,13 @@ private fun PostItem(
 
 @Composable
 private fun PostHeader(p: Post, onUser: () -> Unit) {
-    Column {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(
                 p.author.name,
                 Modifier.weight(1f, fill = false).clickable(role = Role.Button, onClick = onUser),
                 style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

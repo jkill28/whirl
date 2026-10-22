@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -16,6 +17,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -32,6 +36,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.LayoutDirection
 import au.howesthat.whirl.core.model.Block
 import au.howesthat.whirl.core.model.Inline
 import au.howesthat.whirl.core.model.PostBody
@@ -76,10 +81,35 @@ fun PostBodyView(
                     block.text,
                     modifier = block.postId?.let { id -> Modifier.clickable(role = Role.Button) { onQuote(id) } } ?: Modifier,
                     style = textStyle,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = colors.repliedUser,
                 )
-                is Block.Paragraph -> Text(annotate(block.inlines, colors, onLink, revealed, reveal, counter), style = textStyle)
+                is Block.Paragraph -> {
+                    val text = annotate(block.inlines, colors, onLink, revealed, reveal, counter)
+                    val quote = paragraphQuote(block.inlines)
+                    if (quote == null) {
+                        Text(text, style = textStyle)
+                    } else {
+                        val rule = if (quote == QuoteKind.REPLIED_USER) colors.repliedUser else MaterialTheme.colorScheme.outline
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                text,
+                                modifier = Modifier
+                                    .drawBehind {
+                                        val width = 3.dp.toPx()
+                                        val x = if (layoutDirection == LayoutDirection.Rtl) size.width - width else 0f
+                                        drawRect(rule, topLeft = Offset(x, 0f), size = Size(width, size.height))
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                style = textStyle,
+                            )
+                        }
+                    }
+                }
                 is Block.ListBlock -> Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     block.items.forEachIndexed { i, item ->
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -110,6 +140,27 @@ fun PostBodyView(
                 }
             }
         }
+    }
+}
+
+/** Mixed paragraphs retain their inline styling; only wholly quoted text gets an inset surface. */
+private fun paragraphQuote(inlines: List<Inline>): QuoteKind? {
+    val kinds = mutableListOf<QuoteKind?>()
+    fun collect(list: List<Inline>) {
+        list.forEach { inline ->
+            when (inline) {
+                is Inline.Text -> if (inline.text.isNotBlank()) kinds += inline.style.quote
+                is Inline.Link -> if (inline.text.isNotBlank()) kinds += inline.style.quote
+                is Inline.Spoiler -> collect(inline.inlines)
+                Inline.LineBreak -> Unit
+            }
+        }
+    }
+    collect(inlines)
+    return when {
+        kinds.isEmpty() || kinds.any { it == null } -> null
+        QuoteKind.REPLIED_USER in kinds -> QuoteKind.REPLIED_USER
+        else -> QuoteKind.OTHER
     }
 }
 

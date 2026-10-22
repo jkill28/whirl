@@ -9,29 +9,39 @@ import kotlin.test.assertTrue
 class ThemeContrastTest {
     @Test
     fun `light and dark themes keep text and actions readable`() {
-        listOf(LightColors, DarkColors).forEach { scheme ->
-            val surfaces = listOf(scheme.background, scheme.surface, scheme.surfaceContainerHigh, scheme.surfaceContainerHighest)
-            surfaces.forEach { surface ->
+        listOf(LightColors to LightUnreadContainer, DarkColors to DarkUnreadContainer).forEach { (scheme, unread) ->
+            (greySurfaces(scheme) + unread).forEach { surface ->
                 readable(scheme.onSurface, surface)
                 readable(scheme.onSurfaceVariant, surface)
                 readable(scheme.primary, surface)
             }
             readable(scheme.onPrimary, scheme.primary)
             readable(scheme.onPrimaryContainer, scheme.primaryContainer)
+            readable(scheme.primary, scheme.primaryContainer)
+            readable(scheme.onSecondary, scheme.secondary)
             readable(scheme.onSecondaryContainer, scheme.secondaryContainer)
+            readable(scheme.onTertiary, scheme.tertiary)
+            readable(scheme.onTertiaryContainer, scheme.tertiaryContainer)
         }
     }
 
     @Test
-    fun `all neutral surface elevations stay grey`() {
+    fun `surface layers keep a cool grey tone and visible separation`() {
         listOf(LightColors, DarkColors).forEach { scheme ->
-            neutralSurfaces(scheme).forEach { color ->
-                assertTrue(color.red == color.green && color.green == color.blue, "Surface must remain neutral: $color")
+            greySurfaces(scheme).forEach { color ->
+                val range = maxOf(color.red, color.green, color.blue) - minOf(color.red, color.green, color.blue)
+                assertTrue(range <= 0.12f, "Surface must stay within the cool grey palette: $color")
+                assertTrue(color.blue >= color.red, "Surface must retain its cool grey tint: $color")
             }
+            assertTrue(scheme.surface.luminance() > scheme.background.luminance(), "Reading panels must lift above the page canvas")
+            assertTrue(scheme.surface != scheme.surfaceContainerHigh, "Recessed controls and reading panels need separate surface roles")
+        }
+        greySurfaces(LightColors).forEach { color ->
+            assertTrue(color.luminance() in 0.7f..0.94f, "Light surfaces must remain visibly light grey rather than white: $color")
         }
     }
 
-    private fun neutralSurfaces(scheme: ColorScheme) = listOf(
+    private fun greySurfaces(scheme: ColorScheme) = listOf(
         scheme.background, scheme.surface, scheme.surfaceVariant, scheme.surfaceBright, scheme.surfaceDim,
         scheme.surfaceContainerLowest, scheme.surfaceContainerLow, scheme.surfaceContainer,
         scheme.surfaceContainerHigh, scheme.surfaceContainerHighest,

@@ -1,13 +1,20 @@
 package au.howesthat.whirl.feature.threadlist
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -15,8 +22,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -240,9 +252,35 @@ fun WatchedScreen(navIcon: NavIcon, nav: ThreadListNav, viewModel: WatchedViewMo
                     navigationIcon = { NavIconButton(navIcon) },
                     actions = { RefreshButton { viewModel.refresh() } },
                 )
-                PrimaryTabRow(selectedTabIndex = if (unreadOnly) 0 else 1) {
-                    Tab(selected = unreadOnly, onClick = { viewModel.showUnreadOnly(true) }, text = { Text(stringResource(R.string.watched_tab_unread)) })
-                    Tab(selected = !unreadOnly, onClick = { viewModel.showUnreadOnly(false) }, text = { Text(stringResource(R.string.watched_tab_all)) })
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(16.dp))
+                        .padding(4.dp).selectableGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    listOf(true, false).forEach { onlyUnread ->
+                        val selected = unreadOnly == onlyUnread
+                        Tab(
+                            selected = selected,
+                            onClick = { viewModel.showUnreadOnly(onlyUnread) },
+                            modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
+                                .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent),
+                            selectedContentColor = MaterialTheme.colorScheme.primary,
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(stringResource(if (onlyUnread) R.string.watched_tab_unread else R.string.watched_tab_all))
+                                    if (onlyUnread && unread > 0) {
+                                        Badge(
+                                            modifier = Modifier.clearAndSetSemantics {},
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                                        ) { Text(unread.toString()) }
+                                    }
+                                }
+                            },
+                        )
+                    }
                 }
             }
         },

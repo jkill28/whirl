@@ -33,6 +33,7 @@
     <string name="row_deleted">Deleted</string>
     <string name="row_last_by_at">%1$s, %2$s</string>
     <string name="row_last_by">%1$s</string>
+    <string name="row_new_count">%1$d new</string>
     <plurals name="row_replies">
         <item quantity="one">%1$d reply</item>
         <item quantity="other">%1$d replies</item>

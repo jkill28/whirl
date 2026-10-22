@@ -2,6 +2,8 @@
 
 Read in this order: this file → `PLAN.md` → `fixtures/README.md` → `tools/capture/README.md` → `docs/device-checklist.md` (and `docs/play-console.md` for anything about Google Play). Then the two reference trees only when a behaviour question is not answered by `PLAN.md`.
 
+**Current visual design (22 October 2026):** Silver & ember supersedes the flat grey/orange treatment. Both themes use layered grey surfaces, rounded forum groups, warm unread highlights and grouped posts/settings. See `docs/design/silver-ember.md` for tokens, native screenshots and verification.
+
 ## What exists in this directory
 | Path | What it is | In git? |
 |---|---|---|

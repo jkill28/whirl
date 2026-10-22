@@ -1,17 +1,24 @@
 package au.howesthat.whirl.feature.forums
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -26,10 +33,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -124,7 +133,7 @@ fun ForumsScreen(navIcon: NavIcon, onOpenForum: (ForumRef) -> Unit, onSearch: ()
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.forums_title)) },
+                title = { Text(stringResource(R.string.forums_title), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = { NavIconButton(navIcon) },
                 actions = {
                     IconButton(onClick = onSearch) { Icon(Icons.Default.Search, stringResource(R.string.search)) }
@@ -138,16 +147,18 @@ fun ForumsScreen(navIcon: NavIcon, onOpenForum: (ForumRef) -> Unit, onSearch: ()
             if (sections == null && failed != null) {
                 ErrorState(failed, onRetry = { viewModel.refresh() }, modifier = Modifier.fillMaxWidth(), onOpenInBrowser = { browser(urls.index().toString()) })
             } else {
-                LazyColumn(Modifier.fillMaxSize()) {
+                LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 20.dp)) {
                     item(key = "updated") {
                         UpdatedAgo(state.updatedAt, Instant.now(), Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                         failed?.let { Text(errorMessage(it), Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.error) }
                     }
                     sections.orEmpty().forEach { section ->
                         item(key = "h-${section.isFavourites}-${section.title}") { Header(section.title) }
-                        items(section.forums, key = { "${section.isFavourites}-${it.forum.id}" }) { item ->
+                        itemsIndexed(section.forums, key = { _, item -> "${section.isFavourites}-${item.forum.id}" }) { index, item ->
                             ForumRow(
                                 item,
+                                first = index == 0,
+                                last = index == section.forums.lastIndex,
                                 onOpen = {
                                     if (item.isPrivate) browser(urls.forum(item.forum.id).toString())
                                     else onOpenForum(ForumRef(item.forum.id, item.forum.title))
@@ -164,44 +175,63 @@ fun ForumsScreen(navIcon: NavIcon, onOpenForum: (ForumRef) -> Unit, onSearch: ()
 
 @Composable
 private fun Header(title: String) {
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+    Row(
+        Modifier.fillMaxWidth().padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.padding(end = 8.dp).size(4.dp, 14.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(3.dp)))
         Text(
             title,
-            Modifier.fillMaxWidth().semantics { heading() }.padding(horizontal = 16.dp, vertical = 8.dp),
+            Modifier.semantics { heading() },
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
         )
     }
 }
 
 @Composable
-private fun ForumRow(item: ForumListItem, onOpen: () -> Unit, onToggleFavourite: () -> Unit) {
+private fun ForumRow(item: ForumListItem, first: Boolean, last: Boolean, onOpen: () -> Unit, onToggleFavourite: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     val actions = listOf(
         MenuAction(stringResource(if (item.isFavourite) R.string.remove_favourite else R.string.add_favourite), onClick = onToggleFavourite),
     )
-    Box {
-        ListItem(
-            modifier = Modifier.menuClickable(
-                actions,
-                onLongClick = { menu = true },
-                onClick = onOpen,
-                onLongClickLabel = stringResource(au.howesthat.whirl.core.ui.R.string.show_actions),
-            ),
-            headlineContent = { Text(item.forum.title) },
-            supportingContent = if (item.isPrivate) {
-                { Text(stringResource(R.string.private_forum)) }
-            } else {
-                null
-            },
-            trailingContent = {
-                when {
-                    // The supporting line already says "Private forum".
-                    item.isPrivate -> Icon(Icons.Default.Lock, contentDescription = null)
-                    item.isFavourite -> Icon(Icons.Default.Star, stringResource(R.string.favourite), tint = MaterialTheme.colorScheme.primary)
-                }
-            },
-        )
-        ActionsMenu(menu, onDismiss = { menu = false }, actions)
+    val shape = RoundedCornerShape(
+        topStart = if (first) 18.dp else 0.dp,
+        topEnd = if (first) 18.dp else 0.dp,
+        bottomStart = if (last) 18.dp else 0.dp,
+        bottomEnd = if (last) 18.dp else 0.dp,
+    )
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        shape = shape,
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 1.dp,
+    ) {
+        Column {
+            if (!first) HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            ListItem(
+                modifier = Modifier.menuClickable(
+                    actions,
+                    onLongClick = { menu = true },
+                    onClick = onOpen,
+                    onLongClickLabel = stringResource(au.howesthat.whirl.core.ui.R.string.show_actions),
+                ),
+                headlineContent = { Text(item.forum.title, fontWeight = FontWeight.Medium) },
+                supportingContent = if (item.isPrivate) {
+                    { Text(stringResource(R.string.private_forum)) }
+                } else {
+                    null
+                },
+                trailingContent = {
+                    when {
+                        // The supporting line already says "Private forum".
+                        item.isPrivate -> Icon(Icons.Default.Lock, contentDescription = null)
+                        item.isFavourite -> Icon(Icons.Default.Star, stringResource(R.string.favourite), tint = MaterialTheme.colorScheme.primary)
+                    }
+                },
+            )
+            ActionsMenu(menu, onDismiss = { menu = false }, actions)
+        }
     }
 }
