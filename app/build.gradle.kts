@@ -24,7 +24,7 @@ android {
     namespace = "au.howesthat.whirl"
 
     defaultConfig {
-        applicationId = "au.howesthat.whirl"
+        applicationId = "fr.whirl.app"
         versionCode = whirlVersionCode
         versionName = whirlVersion
     }

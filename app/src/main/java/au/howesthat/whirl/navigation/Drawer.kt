@@ -81,6 +81,11 @@ private fun Item(entry: DrawerEntry, selected: Boolean, onSelect: (DrawerEntry) 
         label = { Text(stringResource(entry.label)) },
         icon = { Icon(entry.icon, contentDescription = null) },
         selected = selected,
+        colors = NavigationDrawerItemDefaults.colors(
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ),
         onClick = { onSelect(entry) },
         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
     )

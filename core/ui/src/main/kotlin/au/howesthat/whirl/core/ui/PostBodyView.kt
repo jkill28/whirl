@@ -17,7 +17,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
@@ -39,27 +38,14 @@ import au.howesthat.whirl.core.model.PostBody
 import au.howesthat.whirl.core.model.QuoteKind
 import au.howesthat.whirl.core.model.Style
 
-/**
- * Whirldroid 2.14.12's quote colours (PLAN.md §1.5). They stay fixed under Material You so quotes look like
- * Whirlpool's; 2.14.12's single `#9F6E19` for other quotes was 4.2:1 on both light and dark surfaces, so it has a
- * darker and a lighter shade of the same hue that reach 4.5:1 (5.1 and 5.4).
- */
-private object QuoteColors {
-    val repliedUserLight = Color(0xFF4455AA)
-    val repliedUserDark = Color(0xFF7885C4)
-    val otherLight = Color(0xFF8D6216)
-    val otherDark = Color(0xFFD49221)
-}
-
 private class BodyColors(val repliedUser: Color, val other: Color, val link: Color, val spoiler: Color, val codeBackground: Color)
 
 @Composable
 private fun bodyColors(): BodyColors {
     val scheme = MaterialTheme.colorScheme
-    val dark = scheme.surface.luminance() < 0.5f
     return BodyColors(
-        repliedUser = if (dark) QuoteColors.repliedUserDark else QuoteColors.repliedUserLight,
-        other = if (dark) QuoteColors.otherDark else QuoteColors.otherLight,
+        repliedUser = scheme.primary,
+        other = scheme.onSurfaceVariant,
         link = scheme.primary,
         spoiler = scheme.onSurfaceVariant,
         codeBackground = scheme.surfaceContainerHighest,

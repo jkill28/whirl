@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The middle of the launcher icon's teal gradient (tools/store-graphics/make_icon.py), behind the splash icon. -->
-    <color name="splash_background">#2B8A84</color>
+    <!-- Deep-ocean backdrop matching the launcher icon (tools/store-graphics/make_icon.py). -->
+    <color name="splash_background">#0B3C47</color>
 </resources>

@@ -211,7 +211,11 @@ fun ThreadRowItem(
             trailingContent = if (item.unreadCount > 0) {
                 {
                     val unread = pluralStringResource(R.plurals.row_unread, item.unreadCount, item.unreadCount)
-                    Badge(Modifier.clearAndSetSemantics { contentDescription = unread }) { Text(item.unreadCount.toString()) }
+                    Badge(
+                        Modifier.clearAndSetSemantics { contentDescription = unread },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ) { Text(item.unreadCount.toString()) }
                 }
             } else {
                 null

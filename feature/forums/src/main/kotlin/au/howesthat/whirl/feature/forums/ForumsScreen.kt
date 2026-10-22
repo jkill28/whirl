@@ -198,7 +198,7 @@ private fun ForumRow(item: ForumListItem, onOpen: () -> Unit, onToggleFavourite:
                 when {
                     // The supporting line already says "Private forum".
                     item.isPrivate -> Icon(Icons.Default.Lock, contentDescription = null)
-                    item.isFavourite -> Icon(Icons.Default.Star, stringResource(R.string.favourite))
+                    item.isFavourite -> Icon(Icons.Default.Star, stringResource(R.string.favourite), tint = MaterialTheme.colorScheme.primary)
                 }
             },
         )

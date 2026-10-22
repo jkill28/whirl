@@ -104,10 +104,10 @@ class RepositoryTest {
     }
 
     @Test
-    fun `wallpaper colours default on and can be turned off`() = runTest {
-        assertTrue(settings.settings.first().dynamicColor)
-        settings.update { it.copy(dynamicColor = false) }
+    fun `brand colours are the default and wallpaper colours are opt in`() = runTest {
         assertFalse(settings.settings.first().dynamicColor)
+        settings.update { it.copy(dynamicColor = true) }
+        assertTrue(settings.settings.first().dynamicColor)
     }
 
     @Test

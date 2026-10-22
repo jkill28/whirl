@@ -2,7 +2,7 @@
 
 Writes every icon from one geometry on Android's 108-unit adaptive-icon grid (art inside the 66-unit safe circle):
   app/src/main/res/drawable/ic_launcher_foreground.xml   bubble and spiral, also the monochrome (themed) layer
-  app/src/main/res/drawable/ic_launcher_background.xml   teal gradient
+  app/src/main/res/drawable/ic_launcher_background.xml   deep-ocean gradient
   core/notifications/src/main/res/drawable/ic_stat_whirl.xml   status bar icon (heavier lines, fewer turns)
   tools/store-graphics/icon.html, feature.html           rendered to PNG by render.mjs (see README.md)
 
@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 C = 54.0
-LIGHT, DARK, CREAM = '#5CC2A7', '#0F4C5C', '#F4F1E6'
+LIGHT, DARK, ACCENT = '#0C5962', '#071E2B', '#49E2D0'
 CENTRE = (C - 1, C - 2)
 
 
@@ -59,7 +59,7 @@ def vector_path(d, width, colour='#FFFFFFFF', indent='    '):
     return f'{indent}<path\n' + '\n'.join(f'{indent}    {a}' for a in attrs) + ' />\n'
 
 
-INK = f'#FF{CREAM[1:]}'
+INK = f'#FF{ACCENT[1:]}'
 
 
 def write(rel, text):
@@ -85,6 +85,10 @@ def main():
           f'                <item android:offset="0" android:color="#FF{LIGHT[1:]}" />\n'
           f'                <item android:offset="1" android:color="#FF{DARK[1:]}" />\n'
           '            </gradient>\n        </aapt:attr>\n    </path>\n</vector>\n')
+    write('app/src/main/res/values/splash.xml',
+          '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
+          '    <!-- Deep-ocean backdrop matching the launcher icon (tools/store-graphics/make_icon.py). -->\n'
+          '    <color name="splash_background">#0B3C47</color>\n</resources>\n')
     # 24 dp status bar icon: the 108 grid scaled so the bubble (and its tail) fills it. Only alpha is used.
     scale = 24 / 62
     write('core/notifications/src/main/res/drawable/ic_stat_whirl.xml', HEADER +
@@ -97,8 +101,8 @@ def main():
           vector_path(STAT_BUBBLE, STAT_BUBBLE_W, indent='        ') +
           vector_path(STAT_SPIRAL, STAT_SPIRAL_W, indent='        ') +
           '    </group>\n</vector>\n')
-    svg_art = (f'<path d="{BUBBLE}" fill="none" stroke="{CREAM}" stroke-width="{BUBBLE_W}" stroke-linecap="round" stroke-linejoin="round"/>'
-               f'<path d="{SPIRAL}" fill="none" stroke="{CREAM}" stroke-width="{SPIRAL_W}" stroke-linecap="round"/>')
+    svg_art = (f'<path d="{BUBBLE}" fill="none" stroke="{ACCENT}" stroke-width="{BUBBLE_W}" stroke-linecap="round" stroke-linejoin="round"/>'
+               f'<path d="{SPIRAL}" fill="none" stroke="{ACCENT}" stroke-width="{SPIRAL_W}" stroke-linecap="round"/>')
     gradient = (f'<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{LIGHT}"/>'
                 f'<stop offset="1" stop-color="{DARK}"/></linearGradient></defs>')
     # Play's icon is full bleed (Play applies its own mask and corner radius): a slightly wider window than the
