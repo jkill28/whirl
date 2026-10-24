@@ -5,6 +5,8 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -143,10 +145,10 @@ fun WhirlApp(
             NavHost(
                 nav,
                 startDestination = startRoute,
-                enterTransition = { if (screenAnimations) null else EnterTransition.None },
-                exitTransition = { if (screenAnimations) null else ExitTransition.None },
-                popEnterTransition = { if (screenAnimations) null else EnterTransition.None },
-                popExitTransition = { if (screenAnimations) null else ExitTransition.None },
+                enterTransition = { if (screenAnimations) fadeIn() else EnterTransition.None },
+                exitTransition = { if (screenAnimations) fadeOut() else ExitTransition.None },
+                popEnterTransition = { if (screenAnimations) fadeIn() else EnterTransition.None },
+                popExitTransition = { if (screenAnimations) fadeOut() else ExitTransition.None },
             ) {
                 composable<NewsRoute> { NewsScreen(drawerIcon) }
                 composable<RecentRoute> { RecentScreen(drawerIcon, listNav) }
