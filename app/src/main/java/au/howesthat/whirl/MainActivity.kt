@@ -66,7 +66,15 @@ class MainActivity : ComponentActivity() {
                     // Fixed while this tree lives: a changed homepage setting must not re-route an open NavHost.
                     val startRoute = remember { loaded.settings.homepage.route() }
                     val link by viewModel.link.collectAsStateWithLifecycle()
-                    WhirlApp(startRoute = startRoute, account = account, alert = alert, link = link, onLinkHandled = viewModel::linkHandled) { host ->
+                    WhirlApp(
+                        startRoute = startRoute,
+                        account = account,
+                        screenAnimations = loaded.settings.screenAnimations,
+                        alert = alert,
+                        link = link,
+                        onLinkHandled = viewModel::linkHandled,
+                        onExitRequested = ::finish,
+                    ) { host ->
                         WatchSnackbars(host, viewModel.watchEvents, viewModel::undo, viewModel::commit)
                     }
                 }

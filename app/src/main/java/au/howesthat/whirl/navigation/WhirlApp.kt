@@ -1,5 +1,10 @@
 package au.howesthat.whirl.navigation
 
+import android.os.SystemClock
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -11,9 +16,12 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -56,8 +64,10 @@ fun WhirlApp(
     startRoute: Any,
     account: Account?,
     alert: String,
+    screenAnimations: Boolean = false,
     link: Any? = null,
     onLinkHandled: () -> Unit = {},
+    onExitRequested: () -> Unit = {},
     /** App-wide snackbars (watch actions), shown above every screen. */
     snackbars: @Composable (SnackbarHostState) -> Unit = {},
 ) {
@@ -68,6 +78,20 @@ fun WhirlApp(
     val backStackEntry by nav.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
     val isTopLevel = TOP_LEVEL.any { entry -> destination?.hasRoute(entry.route::class) == true }
+    val context = LocalContext.current
+    var lastBackAt by remember { mutableLongStateOf(0L) }
+
+    // At a main drawer destination, give Back a short confirmation window before exiting.
+    // Pushed destinations and an open drawer keep their normal Back behavior.
+    BackHandler(enabled = isTopLevel && !drawerState.isOpen) {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastBackAt <= EXIT_CONFIRMATION_WINDOW_MS) {
+            onExitRequested()
+        } else {
+            lastBackAt = now
+            Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val drawerIcon = remember(drawerState) { NavIcon.Drawer { scope.launch { drawerState.open() } } }
     val backIcon = remember(nav) { NavIcon.Back { nav.popBackStack() } }
@@ -116,7 +140,14 @@ fun WhirlApp(
                 )
             },
         ) {
-            NavHost(nav, startDestination = startRoute) {
+            NavHost(
+                nav,
+                startDestination = startRoute,
+                enterTransition = { if (screenAnimations) null else EnterTransition.None },
+                exitTransition = { if (screenAnimations) null else ExitTransition.None },
+                popEnterTransition = { if (screenAnimations) null else EnterTransition.None },
+                popExitTransition = { if (screenAnimations) null else ExitTransition.None },
+            ) {
                 composable<NewsRoute> { NewsScreen(drawerIcon) }
                 composable<RecentRoute> { RecentScreen(drawerIcon, listNav) }
                 composable<LatestRoute> { LatestScreen(drawerIcon, listNav) }
@@ -140,6 +171,8 @@ fun WhirlApp(
         SnackbarHost(snackbarHost, Modifier.align(Alignment.BottomCenter).navigationBarsPadding())
     }
 }
+
+private const val EXIT_CONFIRMATION_WINDOW_MS = 2_000L
 
 /** Drawer destinations replace each other above the start screen; Settings and About push on top. */
 private fun NavHostController.navigateTopLevel(route: Any) {

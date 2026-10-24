@@ -86,6 +86,7 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit, viewModel: Setti
             Section(stringResource(R.string.settings_general)) {
                 Choice(stringResource(R.string.settings_homepage), Homepage.entries, settings.homepage, { homepageLabel(it) }) { v -> update { it.copy(homepage = v) } }
                 Choice(stringResource(R.string.settings_theme), ThemeMode.entries, settings.theme, { themeLabel(it) }) { v -> update { it.copy(theme = v) } }
+                Toggle(stringResource(R.string.settings_screen_animations), settings.screenAnimations) { v -> update { it.copy(screenAnimations = v) } }
                 // Material You needs Android 12; older phones always get Whirl's own colours.
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     Toggle(stringResource(R.string.settings_dynamic_color), settings.dynamicColor) { v -> update { it.copy(dynamicColor = v) } }
