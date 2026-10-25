@@ -149,6 +149,8 @@ fun WhirlApp(
                 exitTransition = { if (screenAnimations) fadeOut() else ExitTransition.None },
                 popEnterTransition = { if (screenAnimations) fadeIn() else EnterTransition.None },
                 popExitTransition = { if (screenAnimations) fadeOut() else ExitTransition.None },
+                predictivePopEnterTransition = { _ -> if (screenAnimations) fadeIn() else EnterTransition.None },
+                predictivePopExitTransition = { _ -> if (screenAnimations) fadeOut() else ExitTransition.None },
             ) {
                 composable<NewsRoute> { NewsScreen(drawerIcon) }
                 composable<RecentRoute> { RecentScreen(drawerIcon, listNav) }
