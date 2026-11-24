@@ -24,7 +24,7 @@ moderators").
 4. New personal accounts must also confirm access to a real Android device through the Play Console app.
 
 This account also covers Google's developer verification, which applies to sideloaded apps (the GitHub APK) worldwide
-from 2027; register the package `au.howesthat.whirl` against it when Play prompts.
+from 2027; register the package `com.weshlameche.whirl` against it when Play prompts.
 
 ## 2. Create the app
 **Create app**: name `Whirl: forum reader`, default language English (Australia) – en-AU, **App**, **Free** (it can never
@@ -52,8 +52,8 @@ Upload the zip, then delete it. Its certificate must be SHA-256 `ebf77bd8…65ae
 - App name: `fastlane/metadata/android/en-AU/title.txt`
 - Short description: `short_description.txt`; full description: `full_description.txt`
 - App icon: `images/icon.png` (512×512); feature graphic: `images/featureGraphic.png` (1024×500)
-- Phone screenshots: `images/phoneScreenshots/1.png`–`6.png` in order (thread, forum, forums, popular, news, thread in
-  dark theme; 1008×2016, Pixel 9 Pro XL, cropped to Play's 2:1 limit)
+- Phone screenshots: `images/phoneScreenshots/1.png`–`6.png` (1080×1920, Silver & Ember theme: thread view, watched threads light/dark, unread filter, forums & favourites, settings)
+- Tablet screenshots: `images/sevenInchScreenshots/1.png`–`2.png` (1200×1920) and `images/tenInchScreenshots/1.png`–`2.png` (1600×2560)
 - Category: **Social** (Whirlpool is a discussion community); tags: forums, community, broadband
 - Contact: email `whirl@howesthat.net.au`, website `https://dalbo.github.io/whirl/`
 - Privacy policy: `https://dalbo.github.io/whirl/privacy/`

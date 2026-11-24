@@ -29,19 +29,27 @@ class WhirlpoolLinkTest {
     }
 
     @Test
-    fun `other forum pages`() {
+    fun `other forum pages and whirlpool subdomains`() {
         assertEquals(Archive(ThreadId("1000422")), WhirlpoolLink.parse("$f/archive/1000422"))
         assertEquals(Forum(92), WhirlpoolLink.parse("$f/forum/92"))
         assertEquals(Forum(7, 179), WhirlpoolLink.parse("$f/forum/7?g=179"))
+        assertEquals(Forum(7, 179), WhirlpoolLink.parse("$f/forum-threads.cfm?f=7&g=179"))
         assertEquals(User(30703), WhirlpoolLink.parse("$f/user/30703"))
         assertEquals(Reply(75543951), WhirlpoolLink.parse("$f/forum/?action=replies&r=75543951"))
+        assertEquals(Reply(75543951), WhirlpoolLink.parse("$f/forum-replies.cfm?r=75543951"))
         assertEquals(Short("https://whrl.pl/RgPkJ5"), WhirlpoolLink.parse("https://whrl.pl/RgPkJ5"))
+        assertEquals(Thread(ThreadId("3pxj858k")), WhirlpoolLink.parse("https://www.forums.whirlpool.net.au/thread/3pxj858k"))
+        assertEquals(Thread(ThreadId("3pxj858k")), WhirlpoolLink.parse("https://m.whirlpool.net.au/thread/3pxj858k"))
+        assertEquals(Forum(92), WhirlpoolLink.parse("https://www.whirlpool.net.au/forum/92"))
     }
 
     @Test
     fun `everything else is external`() {
         listOf(
             "https://whirlpool.net.au/wiki/nbn",
+            "https://www.whirlpool.net.au/wiki/nbn",
+            "https://evilwhirlpool.net.au/thread/3pxj858k",
+            "https://whrl.pl/",
             "$f/forum/?action=popular_views",
             "$f/forum/?action=reply&r=75543951",
             "https://example.com/thread/abc",

@@ -25,13 +25,15 @@ sealed interface WhirlpoolLink {
 
     companion object {
         internal const val REPLY_ID_MIN = 1_000_000L
-        private val FORUM_HOSTS = setOf("forums.whirlpool.net.au", "www.forums.whirlpool.net.au")
+        private const val WHIRLPOOL_SUBDOMAIN_SUFFIX = ".whirlpool.net.au"
         private val ID = Regex("""[A-Za-z0-9]+""")
 
         fun parse(url: String): WhirlpoolLink {
             val http = url.trim().toHttpUrlOrNull() ?: return External(url)
-            if (http.host == "whrl.pl" || http.host == "www.whrl.pl") return Short(http.toString())
-            if (http.host !in FORUM_HOSTS) return External(url)
+            if (http.host == "whrl.pl" || http.host == "www.whrl.pl") {
+                return if (http.pathSegments.any(String::isNotEmpty)) Short(http.toString()) else External(url)
+            }
+            if (!http.host.endsWith(WHIRLPOOL_SUBDOMAIN_SUFFIX)) return External(url)
             return parseForums(http) ?: External(url)
         }
 

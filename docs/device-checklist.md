@@ -1,6 +1,6 @@
 # Manual device checklist
 
-Run on a real phone before tagging a release (PLAN.md §8). Debug builds install beside the release app as `au.howesthat.whirl.debug`. Note the build, the phone and its Android version, and the network (Wi-Fi or mobile data) with the result.
+Run on a real phone before tagging a release (PLAN.md §8). Debug builds install beside the release app as `com.weshlameche.whirl.debug`. Note the build, the phone and its Android version, and the network (Wi-Fi or mobile data) with the result.
 
 ## v1.0 (polish)
 **TalkBack** (Settings → Accessibility → TalkBack; or hold both volume keys if the shortcut is on)
@@ -68,6 +68,6 @@ Run on a real phone before tagging a release (PLAN.md §8). Debug builds install
 - [ ] Industry news grouped by day; an article opens in the browser.
 - [ ] Search from Forums (site-wide); Next/Previous on a common term.
 - [ ] User profile from a post.
-- [ ] Deep links: enable under App info → Open by default, then open `https://forums.whirlpool.net.au/thread/3pxj858k` from another app; `adb shell am start -a android.intent.action.VIEW -d <url>` works too.
+- [ ] Deep links: enable `whrl.pl` and `*.whirlpool.net.au` under App info → Open by default, then open `https://forums.whirlpool.net.au/thread/3pxj858k` and a `https://whrl.pl/...` short link from another app; `adb shell am start -a android.intent.action.VIEW -d <url>` works too.
 - [ ] Dark theme and light theme.
 - [ ] Repeat a few list and thread loads on mobile data (Cloudflare).

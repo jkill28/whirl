@@ -22,8 +22,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import au.howesthat.whirl.core.data.Settings
 import au.howesthat.whirl.core.data.ThemeMode
 import au.howesthat.whirl.core.ui.WhirlTheme
+import au.howesthat.whirl.core.ui.openInBrowser
 import au.howesthat.whirl.core.notifications.WatchedNotifier
 import au.howesthat.whirl.feature.setup.SetupScreen
+import au.howesthat.whirl.navigation.LEGACY_DEEP_LINK_SCHEME
 import au.howesthat.whirl.navigation.WatchedRoute
 import au.howesthat.whirl.navigation.WatchSnackbars
 import au.howesthat.whirl.navigation.WhirlApp
@@ -44,9 +46,16 @@ class MainActivity : ComponentActivity() {
         installSplashScreen().setKeepOnScreenCondition { viewModel.state.value == null }
         super.onCreate(savedInstanceState)
         // A recreated activity has already handled its launch intent.
-        if (savedInstanceState == null) viewModel.openLink(routeFor(intent))
+        if (savedInstanceState == null) handleIntent(intent)
         enableEdgeToEdge()
         setContent {
+            val browserLink by viewModel.browserLink.collectAsStateWithLifecycle()
+            LaunchedEffect(browserLink) {
+                browserLink?.let { url ->
+                    openInBrowser(this@MainActivity, url)
+                    viewModel.browserLinkHandled()
+                }
+            }
             val state by viewModel.state.collectAsStateWithLifecycle()
             val loaded = state ?: return@setContent
             val dark = isDark(loaded.settings)
@@ -84,13 +93,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        viewModel.openLink(routeFor(intent))
+        handleIntent(intent)
     }
 
-    /** A Whirlpool link, or the watched-thread notification (which opens Watched). */
-    private fun routeFor(intent: Intent): Any? = when {
-        intent.getBooleanExtra(WatchedNotifier.EXTRA_OPEN_WATCHED, false) -> WatchedRoute
-        else -> intent.data?.let { routeForLink(it) }
+    /** A Whirlpool link (`*.whirlpool.net.au`, `whrl.pl`, or legacy), or the watched-thread notification. */
+    private fun handleIntent(intent: Intent) {
+        if (intent.getBooleanExtra(WatchedNotifier.EXTRA_OPEN_WATCHED, false)) {
+            viewModel.openLink(WatchedRoute)
+            return
+        }
+        val uri = intent.data ?: return
+        when (uri.scheme) {
+            LEGACY_DEEP_LINK_SCHEME -> viewModel.openLink(routeForLink(uri))
+            "http", "https" -> viewModel.openUrl(uri.toString())
+        }
     }
 }
 

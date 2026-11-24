@@ -6,6 +6,18 @@
     <!-- WorkManager adds these for long-running foreground work, which Whirl never does; Play lists every permission. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
 
+    <!-- Needed on Android 11+ to pick a browser package in openInBrowser so claimed URLs never bounce back to Whirl. -->
+    <queries>
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
     <application
         android:name=".WhirlApplication"
         android:allowBackup="true"
@@ -25,9 +37,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <!--
-                Whirlpool links. Not autoVerify: we do not own the domain, so on Android 12+ the user turns these on
-                under App info > Open by default. /forum/ and /user/ need a digit after the slash so that
-                /forum/?action=reply (posting, which must stay in the browser) is never claimed.
+                Whirlpool links (*.whirlpool.net.au). Not autoVerify: we do not own the domain, so on Android 12+ the
+                user turns these on under App info > Open by default. /forum/ and /user/ need a digit after the slash
+                so that /forum/?action=reply (posting, which must stay in the browser) is never claimed.
             -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -35,10 +47,11 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
                 <data android:scheme="http" />
-                <data android:host="forums.whirlpool.net.au" />
+                <data android:host="*.whirlpool.net.au" />
                 <data android:pathPrefix="/thread/" />
                 <data android:pathPrefix="/archive/" />
                 <data android:pathPrefix="/forum-replies.cfm" />
+                <data android:pathPrefix="/forum-threads.cfm" />
                 <data android:pathPattern="/forum/1.*" />
                 <data android:pathPattern="/forum/2.*" />
                 <data android:pathPattern="/forum/3.*" />
@@ -57,6 +70,16 @@
                 <data android:pathPattern="/user/7.*" />
                 <data android:pathPattern="/user/8.*" />
                 <data android:pathPattern="/user/9.*" />
+            </intent-filter>
+            <!-- Whirlpool short links (whrl.pl/<code>), resolved in-app by following the redirect. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:scheme="http" />
+                <data android:host="whrl.pl" />
+                <data android:pathPattern="/..*" />
             </intent-filter>
             <!-- Whirldroid's thread links, so old shortcuts and links keep working. -->
             <intent-filter>

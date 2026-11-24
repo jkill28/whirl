@@ -24,7 +24,7 @@ android {
     namespace = "au.howesthat.whirl"
 
     defaultConfig {
-        applicationId = "fr.whirl.app"
+        applicationId = "com.weshlameche.whirl"
         versionCode = whirlVersionCode
         versionName = whirlVersion
     }
@@ -93,4 +93,5 @@ dependencies {
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
