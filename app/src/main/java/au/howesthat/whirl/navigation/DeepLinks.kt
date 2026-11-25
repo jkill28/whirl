@@ -36,6 +36,7 @@ private fun routeFor(link: WhirlpoolLink): Any? = when (link) {
         page = link.page ?: 1,
         scrollToPost = link.anchor?.takeIf { !link.isReplyIdAnchor }?.toInt(),
         scrollToReply = link.anchor?.takeIf { link.isReplyIdAnchor },
+        scrollToLastPost = link.toBottom,
     )
     is WhirlpoolLink.Archive -> ThreadRoute(link.id.value)
     // The forum screen falls back to the title on the page.

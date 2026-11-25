@@ -1,0 +1,3 @@
+- New settings to open public forum threads or watched threads directly at the last post
+- Added "Last post" to the thread menu alongside "Last page"
+- Thread list "Jump to last post" and #bottom links now scroll directly to the last post

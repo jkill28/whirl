@@ -20,14 +20,14 @@ data class Settings(
     val notifyIntervalMinutes: Int = 60,
     // Threads
     val openThreadsInBrowser: Boolean = false,
-    val loadPublicAtBottom: Boolean = false,
+    val publicThreadOpen: PublicThreadOpen = PublicThreadOpen.FIRST_PAGE,
     val loadPrivateAtBottom: Boolean = false,
     // Recent
     val recentHistoryDays: Int = 7,
     val loadRecentAtTop: Boolean = false,
     val ignoreOwnRepliesRecent: Boolean = false,
     // Watched
-    val loadWatchedAtTop: Boolean = false,
+    val watchedThreadOpen: WatchedThreadOpen = WatchedThreadOpen.FIRST_UNREAD,
     val ignoreOwnRepliesWatched: Boolean = false,
     val watchedAutoMarkAsRead: Boolean = false,
     val watchedBackToList: Boolean = false,
@@ -52,6 +52,12 @@ enum class PostFontSize(val sp: Float) { SMALLEST(14f), SMALLER(16f), NORMAL(17f
 
 /** App-wide text size, multiplied with Android's font size. */
 enum class TextScale(val factor: Float) { DEFAULT(1f), LARGE(1.15f), LARGER(1.3f), LARGEST(1.5f) }
+
+/** Where a public forum thread opens when tapped in a list. */
+enum class PublicThreadOpen { FIRST_PAGE, LAST_PAGE, LAST_POST }
+
+/** Where a watched thread opens when tapped in the Watched list. */
+enum class WatchedThreadOpen { FIRST_UNREAD, TOP_OF_PAGE, LAST_POST }
 
 /** The account the API key belongs to. */
 data class Account(val userId: Long, val userName: String)

@@ -201,6 +201,7 @@ private fun ThreadPager(
                     onFilter = viewModel::setFilter,
                     onFirst = { scope.launch { pager.scrollToPage(0) } },
                     onLast = viewModel::lastPage,
+                    onLastPost = viewModel::lastPost,
                     onGoTo = { picking = true },
                     onReply = { browser(viewModel.replyToThreadUrl()) },
                     onOpenInBrowser = { browser(viewModel.threadUrl(pager.currentPage + 1)) },
@@ -245,9 +246,14 @@ private fun PageContent(page: Int, viewModel: ThreadViewModel, error: Throwable?
     LaunchedEffect(loaded, target) {
         val t = target ?: return@LaunchedEffect
         if (loaded == null || t.page != page) return@LaunchedEffect
-        val index = loaded.posts.indexOfFirst { p ->
-            (t.replyId != null && p.post.replyId == t.replyId) || (t.postNumber != null && p.post.number == t.postNumber)
+        val index = when {
+            t.replyId != null -> loaded.posts.indexOfFirst { it.post.replyId == t.replyId }
+            t.postNumber != null -> loaded.posts.indexOfFirst { it.post.number == t.postNumber }
+            t.toLastPost -> loaded.posts.lastIndex
+            else -> -1
         }
+        // If a fresh last-post fetch resolved a replyId that has not yet arrived from the page flow, wait for it.
+        if (index < 0 && t.toLastPost && t.replyId != null) return@LaunchedEffect
         if (index >= 0) list.scrollToItem(headerCount + index)
         viewModel.scrollHandled()
     }
@@ -465,6 +471,7 @@ private fun ThreadMenu(
     onFilter: (PostFilter) -> Unit,
     onFirst: () -> Unit,
     onLast: () -> Unit,
+    onLastPost: () -> Unit,
     onGoTo: () -> Unit,
     onReply: () -> Unit,
     onOpenInBrowser: () -> Unit,
@@ -481,6 +488,7 @@ private fun ThreadMenu(
         HorizontalDivider()
         DropdownMenuItem(text = { Text(stringResource(au.howesthat.whirl.core.ui.R.string.first_page)) }, onClick = { open = false; onFirst() })
         DropdownMenuItem(text = { Text(stringResource(au.howesthat.whirl.core.ui.R.string.last_page)) }, onClick = { open = false; onLast() })
+        DropdownMenuItem(text = { Text(stringResource(R.string.last_post)) }, onClick = { open = false; onLastPost() })
         DropdownMenuItem(text = { Text(stringResource(au.howesthat.whirl.core.ui.R.string.go_to_page)) }, onClick = { open = false; onGoTo() })
         HorizontalDivider()
         val filters = listOfNotNull(

@@ -45,11 +45,13 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
         val watchedNotify = booleanPreferencesKey("watched_notify")
         val notifyInterval = intPreferencesKey("notify_interval")
         val openThreadsInBrowser = booleanPreferencesKey("open_threads_in_browser")
+        val publicThreadOpen = stringPreferencesKey("public_thread_open")
         val loadPublicAtBottom = booleanPreferencesKey("load_public_at_bottom")
         val loadPrivateAtBottom = booleanPreferencesKey("load_private_at_bottom")
         val recentDays = intPreferencesKey("recent_days")
         val loadRecentAtTop = booleanPreferencesKey("load_recent_at_top")
         val ignoreOwnRecent = booleanPreferencesKey("ignore_own_replies_recent")
+        val watchedThreadOpen = stringPreferencesKey("watched_thread_open")
         val loadWatchedAtTop = booleanPreferencesKey("load_watched_at_top")
         val ignoreOwnWatched = booleanPreferencesKey("ignore_own_replies_watched")
         val watchedAutoMarkRead = booleanPreferencesKey("watched_auto_mark_read")
@@ -70,12 +72,14 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
             watchedNotify = p[Keys.watchedNotify] ?: d.watchedNotify,
             notifyIntervalMinutes = p[Keys.notifyInterval] ?: d.notifyIntervalMinutes,
             openThreadsInBrowser = p[Keys.openThreadsInBrowser] ?: d.openThreadsInBrowser,
-            loadPublicAtBottom = p[Keys.loadPublicAtBottom] ?: d.loadPublicAtBottom,
+            publicThreadOpen = p[Keys.publicThreadOpen].toEnumOrNull<PublicThreadOpen>()
+                ?: if (p[Keys.loadPublicAtBottom] == true) PublicThreadOpen.LAST_PAGE else d.publicThreadOpen,
             loadPrivateAtBottom = p[Keys.loadPrivateAtBottom] ?: d.loadPrivateAtBottom,
             recentHistoryDays = p[Keys.recentDays] ?: d.recentHistoryDays,
             loadRecentAtTop = p[Keys.loadRecentAtTop] ?: d.loadRecentAtTop,
             ignoreOwnRepliesRecent = p[Keys.ignoreOwnRecent] ?: d.ignoreOwnRepliesRecent,
-            loadWatchedAtTop = p[Keys.loadWatchedAtTop] ?: d.loadWatchedAtTop,
+            watchedThreadOpen = p[Keys.watchedThreadOpen].toEnumOrNull<WatchedThreadOpen>()
+                ?: if (p[Keys.loadWatchedAtTop] == true) WatchedThreadOpen.TOP_OF_PAGE else d.watchedThreadOpen,
             ignoreOwnRepliesWatched = p[Keys.ignoreOwnWatched] ?: d.ignoreOwnRepliesWatched,
             watchedAutoMarkAsRead = p[Keys.watchedAutoMarkRead] ?: d.watchedAutoMarkAsRead,
             watchedBackToList = p[Keys.watchedBackToList] ?: d.watchedBackToList,
@@ -129,12 +133,14 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
             p[Keys.watchedNotify] = s.watchedNotify
             p[Keys.notifyInterval] = s.notifyIntervalMinutes
             p[Keys.openThreadsInBrowser] = s.openThreadsInBrowser
-            p[Keys.loadPublicAtBottom] = s.loadPublicAtBottom
+            p[Keys.publicThreadOpen] = s.publicThreadOpen.name
+            p[Keys.loadPublicAtBottom] = s.publicThreadOpen != PublicThreadOpen.FIRST_PAGE
             p[Keys.loadPrivateAtBottom] = s.loadPrivateAtBottom
             p[Keys.recentDays] = s.recentHistoryDays
             p[Keys.loadRecentAtTop] = s.loadRecentAtTop
             p[Keys.ignoreOwnRecent] = s.ignoreOwnRepliesRecent
-            p[Keys.loadWatchedAtTop] = s.loadWatchedAtTop
+            p[Keys.watchedThreadOpen] = s.watchedThreadOpen.name
+            p[Keys.loadWatchedAtTop] = s.watchedThreadOpen == WatchedThreadOpen.TOP_OF_PAGE
             p[Keys.ignoreOwnWatched] = s.ignoreOwnRepliesWatched
             p[Keys.watchedAutoMarkRead] = s.watchedAutoMarkAsRead
             p[Keys.watchedBackToList] = s.watchedBackToList
@@ -142,5 +148,8 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
     }
 
     private inline fun <reified E : Enum<E>> String?.toEnum(default: E): E =
-        this?.let { name -> enumValues<E>().firstOrNull { it.name == name } } ?: default
+        toEnumOrNull<E>() ?: default
+
+    private inline fun <reified E : Enum<E>> String?.toEnumOrNull(): E? =
+        this?.let { name -> enumValues<E>().firstOrNull { it.name == name } }
 }

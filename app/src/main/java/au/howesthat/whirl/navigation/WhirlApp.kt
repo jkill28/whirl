@@ -100,7 +100,16 @@ fun WhirlApp(
     val listNav = remember(nav) {
         ThreadListNav(
             openThread = { t ->
-                nav.navigate(ThreadRoute(t.id.value, t.page, scrollToPost = t.scrollToPost, forumId = t.forumId, fromWatched = t.fromWatched))
+                nav.navigate(
+                    ThreadRoute(
+                        t.id.value,
+                        t.page,
+                        scrollToPost = t.scrollToPost,
+                        forumId = t.forumId,
+                        fromWatched = t.fromWatched,
+                        scrollToLastPost = t.scrollToLastPost,
+                    ),
+                )
             },
             openForum = { f -> nav.navigate(ForumRoute(f.id, f.title, f.groupId)) },
             openSearch = { nav.navigate(it) },

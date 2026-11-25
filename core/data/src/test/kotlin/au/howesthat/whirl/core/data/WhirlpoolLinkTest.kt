@@ -26,6 +26,7 @@ class WhirlpoolLinkTest {
         assertTrue(byReply.isReplyIdAnchor)
         assertEquals(Thread(ThreadId("1000422")), WhirlpoolLink.parse("$f/thread/1000422"))
         assertEquals(Thread(ThreadId("1000422"), 3), WhirlpoolLink.parse("http://forums.whirlpool.net.au/forum-replies.cfm?t=1000422&p=3"))
+        assertEquals(Thread(ThreadId("3pxj858k"), -1, toBottom = true), WhirlpoolLink.parse("$f/thread/3pxj858k?p=-1#bottom"))
     }
 
     @Test

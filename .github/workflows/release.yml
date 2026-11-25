@@ -115,7 +115,7 @@ jobs:
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5
         with:
           serviceAccountJson: ${{ steps.gcloud.outputs.credentials_file_path }}
-          packageName: au.howesthat.whirl
+          packageName: com.weshlameche.whirl
           releaseFiles: dist/whirl-${{ github.ref_name }}.aab
           track: ${{ env.PLAY_TRACK }}
           status: completed

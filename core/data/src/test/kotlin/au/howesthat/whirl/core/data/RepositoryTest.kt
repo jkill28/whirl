@@ -1,6 +1,8 @@
 package au.howesthat.whirl.core.data
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import au.howesthat.whirl.core.database.FetchLogEntity
@@ -125,6 +127,24 @@ class RepositoryTest {
         val s = settings.settings.first()
         assertEquals(LocalTime.of(15, 5), s.nightStart)
         assertEquals(LocalTime.of(6, 30), s.nightEnd)
+    }
+
+    @Test
+    fun `thread open position settings round trip and migrate legacy booleans`() = runTest {
+        val store = PreferenceDataStoreFactory.create(scope = dataStoreScope) { tmp.newFile("legacy.preferences_pb").also { it.delete() } }
+        store.edit {
+            it[booleanPreferencesKey("load_public_at_bottom")] = true
+            it[booleanPreferencesKey("load_watched_at_top")] = true
+        }
+        val migrated = SettingsRepository(store)
+        val fromLegacy = migrated.settings.first()
+        assertEquals(PublicThreadOpen.LAST_PAGE, fromLegacy.publicThreadOpen)
+        assertEquals(WatchedThreadOpen.TOP_OF_PAGE, fromLegacy.watchedThreadOpen)
+
+        migrated.update { it.copy(publicThreadOpen = PublicThreadOpen.LAST_POST, watchedThreadOpen = WatchedThreadOpen.LAST_POST) }
+        val updated = migrated.settings.first()
+        assertEquals(PublicThreadOpen.LAST_POST, updated.publicThreadOpen)
+        assertEquals(WatchedThreadOpen.LAST_POST, updated.watchedThreadOpen)
     }
 
     @Test

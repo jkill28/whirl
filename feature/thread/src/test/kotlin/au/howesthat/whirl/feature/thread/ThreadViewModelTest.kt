@@ -44,6 +44,7 @@ import java.net.UnknownHostException
 import java.time.Clock
 import java.time.Duration
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -93,6 +94,51 @@ class ThreadViewModelTest {
         assertEquals("/thread/97r5wzn3?p=-1", server.takeRequest().target)
         assertEquals(2290, vm.pageCount.value)
         assertEquals(17, await { vm.page(2290).filterNotNull().first() }.posts.size)
+        assertNull(vm.scrollTarget.value)
+    }
+
+    @Test
+    fun `opening at last post resolves the last page and scrolls to its last post`() = runTest {
+        enqueueHtml("thread_97r5wzn3_last.html")
+        val vm = viewModel("threadId" to "97r5wzn3", "page" to -1, "scrollToLastPost" to true)
+        assertEquals(2290, await { vm.startPage.filterNotNull().first() })
+        val lastPost = await { vm.page(2290).filterNotNull().first() }.posts.last().post
+        assertEquals(ScrollTarget(2290, replyId = lastPost.replyId, toLastPost = true), vm.scrollTarget.value)
+    }
+
+    @Test
+    fun `lastPost jumps to the last page and scrolls to its last post, while lastPage stays at top`() = runTest {
+        enqueueHtml("thread_3pxj858k_p2.html")
+        val vm = viewModel("threadId" to "3pxj858k", "page" to 2)
+        await { vm.startPage.filterNotNull().first() }
+        server.takeRequest()
+
+        enqueueHtml("thread_97r5wzn3_last.html")
+        vm.lastPost()
+        assertEquals(2290, await { vm.jumpTo.filterNotNull().first() })
+        val lastPost = await { vm.page(2290).filterNotNull().first() }.posts.last().post
+        assertEquals(ScrollTarget(2290, replyId = lastPost.replyId, toLastPost = true), vm.scrollTarget.value)
+        assertEquals("/thread/3pxj858k?p=-1", server.takeRequest().target)
+
+        // Calling lastPost again while already on the last page still sets the scroll target.
+        vm.jumpHandled()
+        vm.scrollHandled()
+        vm.lastPost()
+        assertEquals(ScrollTarget(2290, replyId = lastPost.replyId, toLastPost = true), await { vm.scrollTarget.filterNotNull().first() })
+        assertNull(vm.jumpTo.value)
+    }
+
+    @Test
+    fun `lastPage moves to the last page without scrolling to the last post`() = runTest {
+        enqueueHtml("thread_3pxj858k_p2.html")
+        val vm = viewModel("threadId" to "3pxj858k", "page" to 2)
+        await { vm.startPage.filterNotNull().first() }
+        server.takeRequest()
+
+        enqueueHtml("thread_97r5wzn3_last.html")
+        vm.lastPage()
+        assertEquals(2290, await { vm.jumpTo.filterNotNull().first() })
+        assertNull(vm.scrollTarget.value)
     }
 
     @Test

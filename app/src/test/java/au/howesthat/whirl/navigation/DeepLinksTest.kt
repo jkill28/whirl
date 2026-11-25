@@ -27,6 +27,7 @@ class DeepLinksTest {
         assertEquals(UserRoute(30703), routeForLink("$f/user/30703"))
         assertEquals(ThreadRoute("3pxj858k"), routeForLink("https://www.whirlpool.net.au/thread/3pxj858k"))
         assertEquals(ThreadRoute("3pxj858k"), routeForLink("https://m.whirlpool.net.au/thread/3pxj858k"))
+        assertEquals(ThreadRoute("3pxj858k", -1, scrollToLastPost = true), routeForLink("$f/thread/3pxj858k?p=-1#bottom"))
     }
 
     @Test

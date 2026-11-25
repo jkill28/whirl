@@ -2,6 +2,11 @@
 
 Release notes for each tag are taken from the matching `## vX.Y.Z` section below by the release workflow.
 
+## v1.0.2
+- Settings: choose where public forum threads open (First page, Last page, or Last post) and where watched threads open (First unread post, Top of last read page, or Last post).
+- Thread view: added "Last post" to the menu alongside "Last page" to jump straight to the last post.
+- Thread lists: "Jump to last post" now scrolls directly to the last post in-app, and `#bottom` thread links open at the last post.
+
 ## v1.0.1
 - Report a post to Whirlpool's moderators from its long-press menu (opens Whirlpool's report form in your browser), and report a concern to the developer from About. Whirl's child safety standards are published at https://dalbo.github.io/whirl/child-safety/.
 

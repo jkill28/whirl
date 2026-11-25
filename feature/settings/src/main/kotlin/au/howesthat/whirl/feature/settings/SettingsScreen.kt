@@ -52,9 +52,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import au.howesthat.whirl.core.data.Homepage
 import au.howesthat.whirl.core.data.PostFontSize
+import au.howesthat.whirl.core.data.PublicThreadOpen
 import au.howesthat.whirl.core.data.Settings
 import au.howesthat.whirl.core.data.TextScale
 import au.howesthat.whirl.core.data.ThemeMode
+import au.howesthat.whirl.core.data.WatchedThreadOpen
 import au.howesthat.whirl.feature.setup.NotificationOptions
 import au.howesthat.whirl.feature.setup.themeLabel
 import java.time.LocalTime
@@ -111,7 +113,7 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit, viewModel: Setti
 
             Section(stringResource(R.string.settings_threads)) {
                 Toggle(stringResource(R.string.settings_open_in_browser), settings.openThreadsInBrowser) { v -> update { it.copy(openThreadsInBrowser = v) } }
-                Toggle(stringResource(R.string.settings_public_at_bottom), settings.loadPublicAtBottom) { v -> update { it.copy(loadPublicAtBottom = v) } }
+                Choice(stringResource(R.string.settings_public_open), PublicThreadOpen.entries, settings.publicThreadOpen, { publicOpenLabel(it) }) { v -> update { it.copy(publicThreadOpen = v) } }
                 Toggle(stringResource(R.string.settings_private_at_bottom), settings.loadPrivateAtBottom) { v -> update { it.copy(loadPrivateAtBottom = v) } }
             }
 
@@ -122,7 +124,7 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit, viewModel: Setti
             }
 
             Section(stringResource(R.string.settings_watched)) {
-                Toggle(stringResource(R.string.settings_watched_at_top), settings.loadWatchedAtTop) { v -> update { it.copy(loadWatchedAtTop = v) } }
+                Choice(stringResource(R.string.settings_watched_open), WatchedThreadOpen.entries, settings.watchedThreadOpen, { watchedOpenLabel(it) }) { v -> update { it.copy(watchedThreadOpen = v) } }
                 Toggle(stringResource(R.string.settings_ignore_own_watched), settings.ignoreOwnRepliesWatched) { v -> update { it.copy(ignoreOwnRepliesWatched = v) } }
                 Toggle(stringResource(R.string.settings_auto_mark_read), settings.watchedAutoMarkAsRead) { v -> update { it.copy(watchedAutoMarkAsRead = v) } }
                 Toggle(stringResource(R.string.settings_back_to_list), settings.watchedBackToList) { v -> update { it.copy(watchedBackToList = v) } }
@@ -258,3 +260,21 @@ private fun scaleLabel(t: TextScale) = stringResource(
 
 @Composable
 private fun daysLabel(days: Int) = pluralStringResource(R.plurals.days, days, days)
+
+@Composable
+private fun publicOpenLabel(open: PublicThreadOpen) = stringResource(
+    when (open) {
+        PublicThreadOpen.FIRST_PAGE -> R.string.open_first_page
+        PublicThreadOpen.LAST_PAGE -> R.string.open_last_page
+        PublicThreadOpen.LAST_POST -> R.string.open_last_post
+    },
+)
+
+@Composable
+private fun watchedOpenLabel(open: WatchedThreadOpen) = stringResource(
+    when (open) {
+        WatchedThreadOpen.FIRST_UNREAD -> R.string.open_first_unread
+        WatchedThreadOpen.TOP_OF_PAGE -> R.string.open_top_of_page
+        WatchedThreadOpen.LAST_POST -> R.string.open_last_post
+    },
+)

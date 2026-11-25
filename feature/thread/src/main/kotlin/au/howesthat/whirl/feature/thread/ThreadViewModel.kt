@@ -43,7 +43,8 @@ import javax.inject.Inject
 
 /**
  * A thread, opened at [page] (1-based, or -1 for the last page). [scrollToPost] is a post number, [scrollToReply] a
- * reply id; [userId] opens it filtered to one user's posts (`ux=`); [fromWatched] when opened from Watched.
+ * reply id, [scrollToLastPost] scrolls to the last post on [page]; [userId] opens it filtered to one user's posts
+ * (`ux=`); [fromWatched] when opened from Watched.
  */
 @Serializable
 data class ThreadRoute(
@@ -54,6 +55,7 @@ data class ThreadRoute(
     val forumId: Int? = null,
     val userId: Long? = null,
     val fromWatched: Boolean = false,
+    val scrollToLastPost: Boolean = false,
 )
 
 /** A post ready to draw: its body parsed into blocks. */
@@ -62,7 +64,12 @@ data class UiPost(val post: Post, val body: PostBody)
 data class UiPage(val page: ThreadPage, val posts: List<UiPost>, val note: PostBody?, val updatedAt: Instant?)
 
 /** A post to bring into view once its page is showing. */
-data class ScrollTarget(val page: Int, val postNumber: Int? = null, val replyId: Long? = null)
+data class ScrollTarget(
+    val page: Int,
+    val postNumber: Int? = null,
+    val replyId: Long? = null,
+    val toLastPost: Boolean = false,
+)
 
 /** One-off navigation out of the thread. */
 sealed interface ThreadEvent {
@@ -111,6 +118,7 @@ class ThreadViewModel @Inject constructor(
         when {
             route.scrollToReply != null -> ScrollTarget(route.page, replyId = route.scrollToReply)
             route.scrollToPost != null -> ScrollTarget(route.page, postNumber = route.scrollToPost)
+            route.scrollToLastPost && route.page != LAST_PAGE -> ScrollTarget(route.page, toLastPost = true)
             else -> null
         },
     )
@@ -135,7 +143,7 @@ class ThreadViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, route.fromWatched)
 
     init {
-        open(route.page)
+        open(route.page, scrollToLastPost = route.scrollToLastPost)
         viewModelScope.launch { watchedRepo.ensureKnown() }
     }
 
@@ -162,20 +170,23 @@ class ThreadViewModel @Inject constructor(
     }
 
     /** Resolves the start page (cache first, then the network) and loads it. */
-    private fun open(page: Int) {
+    private fun open(page: Int, scrollToLastPost: Boolean = false) {
         _startPage.value = null
         currentPage.value = null
         viewModelScope.launch {
             val filter = _filter.value
             val known = repo.lastKnownPage(threadId, filter)
             if (page == LAST_PAGE) {
-                known?.let { start(it, it) }
+                known?.let {
+                    start(it, it)
+                    if (scrollToLastPost) _scrollTarget.value = ScrollTarget(it, toLastPost = true)
+                }
             } else {
                 start(page, maxOf(page, known ?: 1))
             }
             // Offline, the fetch below fails; the cached page still knows the thread's title.
             _startPage.value?.let { start -> repo.page(threadId, start, filter).first()?.value?.title?.let { _title.value = it } }
-            load(page, force = false)
+            load(page, force = false, scrollToLastPost = scrollToLastPost)
         }
     }
 
@@ -197,7 +208,7 @@ class ThreadViewModel @Inject constructor(
         load(currentPage.value ?: route.page, force = true)
     }
 
-    private fun load(page: Int, force: Boolean) {
+    private fun load(page: Int, force: Boolean, scrollToLastPost: Boolean = false) {
         loadJob?.cancel()
         _refreshing.value = true
         val job = viewModelScope.launch {
@@ -208,6 +219,11 @@ class ThreadViewModel @Inject constructor(
                 if (loaded != null) {
                     _pageCount.value = loaded.pageCount
                     _title.value = loaded.title
+                }
+                if (scrollToLastPost) {
+                    _scrollTarget.value = ScrollTarget(resolved, replyId = loaded?.posts?.lastOrNull()?.replyId, toLastPost = true)
+                } else if (_scrollTarget.value?.page == LAST_PAGE) {
+                    _scrollTarget.value = _scrollTarget.value?.copy(page = resolved)
                 }
                 if (_startPage.value == null) {
                     start(resolved, loaded?.pageCount ?: resolved)
@@ -220,6 +236,11 @@ class ThreadViewModel @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                if (scrollToLastPost) {
+                    currentPage.value?.takeIf { it == _pageCount.value }?.let {
+                        _scrollTarget.value = ScrollTarget(it, toLastPost = true)
+                    }
+                }
                 _error.value = e
             }
         }
@@ -243,6 +264,11 @@ class ThreadViewModel @Inject constructor(
     /** Loads `?p=-1`; [load] then moves the pager to the page it resolves to. */
     fun lastPage() {
         load(LAST_PAGE, force = false)
+    }
+
+    /** Loads `?p=-1` and scrolls to its last post. */
+    fun lastPost() {
+        load(LAST_PAGE, force = false, scrollToLastPost = true)
     }
 
     fun setFilter(filter: PostFilter) {
@@ -276,13 +302,21 @@ class ThreadViewModel @Inject constructor(
 
     /** Moves within this thread when possible, otherwise opens the other thread. */
     private suspend fun showPost(id: ThreadId, page: Int, target: ScrollTarget?) {
-        if (id == threadId && _filter.value == PostFilter.All) {
+        if (id == threadId && _filter.value == PostFilter.All && page >= 1) {
             if (page > _pageCount.value) _pageCount.value = page
             _scrollTarget.value = target
             _jumpTo.value = page
         } else {
             events.send(
-                ThreadEvent.OpenThread(ThreadRoute(id.value, page, scrollToPost = target?.postNumber, scrollToReply = target?.replyId)),
+                ThreadEvent.OpenThread(
+                    ThreadRoute(
+                        id.value,
+                        page,
+                        scrollToPost = target?.postNumber,
+                        scrollToReply = target?.replyId,
+                        scrollToLastPost = target?.toLastPost == true,
+                    ),
+                ),
             )
         }
     }
@@ -304,10 +338,18 @@ class ThreadViewModel @Inject constructor(
         when (link) {
             is WhirlpoolLink.Thread -> {
                 val page = link.page ?: 1
-                val target = link.anchor?.let {
-                    if (link.isReplyIdAnchor) ScrollTarget(page, replyId = it) else ScrollTarget(page, postNumber = it.toInt())
+                val anchor = link.anchor
+                val target = when {
+                    anchor != null ->
+                        if (link.isReplyIdAnchor) ScrollTarget(page, replyId = anchor) else ScrollTarget(page, postNumber = anchor.toInt())
+                    link.toBottom -> ScrollTarget(page, toLastPost = true)
+                    else -> null
                 }
-                showPost(link.id, page, target)
+                if (link.id == threadId && _filter.value == PostFilter.All && page == LAST_PAGE) {
+                    load(LAST_PAGE, force = false, scrollToLastPost = link.toBottom)
+                } else {
+                    showPost(link.id, page, target)
+                }
             }
             // The archive is the whole thread on one page; the paged view shows the same posts.
             is WhirlpoolLink.Archive -> events.send(ThreadEvent.OpenThread(ThreadRoute(link.id.value)))

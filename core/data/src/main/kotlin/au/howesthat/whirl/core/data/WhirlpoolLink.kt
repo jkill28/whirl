@@ -7,10 +7,15 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 /** A link from a post or a deep link, classified so Whirlpool pages open in the app and the rest in the browser. */
 sealed interface WhirlpoolLink {
     /**
-     * `/thread/<id>[?p=N][#rM]`. The site's anchors are `#r<post number>` on page links and `#r<reply id>` on
-     * user-filtered links; [anchor] keeps whichever it was (see [isReplyIdAnchor]).
+     * `/thread/<id>[?p=N][#rM|#bottom]`. The site's anchors are `#r<post number>` on page links, `#r<reply id>` on
+     * user-filtered links, and `#bottom` for the last post; [anchor] keeps numeric anchors (see [isReplyIdAnchor]).
      */
-    data class Thread(val id: ThreadId, val page: Int? = null, val anchor: Long? = null) : WhirlpoolLink {
+    data class Thread(
+        val id: ThreadId,
+        val page: Int? = null,
+        val anchor: Long? = null,
+        val toBottom: Boolean = false,
+    ) : WhirlpoolLink {
         /** Reply ids are in the tens of millions; post numbers in the largest threads are far below that. */
         val isReplyIdAnchor: Boolean get() = (anchor ?: 0) >= REPLY_ID_MIN
     }
@@ -42,7 +47,12 @@ sealed interface WhirlpoolLink {
             val second = segments.getOrNull(1)
             return when (segments.firstOrNull()) {
                 "thread" -> second?.takeIf(ID::matches)?.let {
-                    Thread(ThreadId(it), url.queryParameter("p")?.toIntOrNull(), url.fragment?.removePrefix("r")?.toLongOrNull())
+                    Thread(
+                        ThreadId(it),
+                        url.queryParameter("p")?.toIntOrNull(),
+                        url.fragment?.removePrefix("r")?.toLongOrNull(),
+                        toBottom = url.fragment == "bottom",
+                    )
                 }
                 "archive" -> second?.takeIf(ID::matches)?.let { Archive(ThreadId(it)) }
                 "user" -> second?.toLongOrNull()?.let(::User)
@@ -53,7 +63,12 @@ sealed interface WhirlpoolLink {
                 }
                 // Legacy forms that still redirect: forum-replies.cfm?t=<id>, forum-threads.cfm?f=<id>.
                 "forum-replies.cfm" -> url.queryParameter("t")?.takeIf(ID::matches)?.let {
-                    Thread(ThreadId(it), url.queryParameter("p")?.toIntOrNull(), url.fragment?.removePrefix("r")?.toLongOrNull())
+                    Thread(
+                        ThreadId(it),
+                        url.queryParameter("p")?.toIntOrNull(),
+                        url.fragment?.removePrefix("r")?.toLongOrNull(),
+                        toBottom = url.fragment == "bottom",
+                    )
                 } ?: url.queryParameter("r")?.toLongOrNull()?.let(::Reply)
                 "forum-threads.cfm" -> url.queryParameter("f")?.toIntOrNull()?.let { Forum(it, url.queryParameter("g")?.toIntOrNull()) }
                 null -> null
